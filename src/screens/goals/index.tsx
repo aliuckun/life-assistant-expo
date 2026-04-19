@@ -2,11 +2,11 @@
 import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, StatusBar, StyleSheet } from 'react-native';
 import { AddGoalModal } from './components/AddGoalModal';
-import { CurrentGoals } from './components/Currentgoals';
+import { CurrentGoals } from './components/CurrentGoals';
 import { PreviousWeeks } from './components/PreviousWeeks';
 import { WeeklyProgress } from './components/WeeklyProgress';
 import { WeeklySummary } from './components/WeeklySummary';
-import { useGoals } from './hook/useGoals';
+import { useGoals } from './hooks/useGoals';
 
 export default function GoalsScreen() {
     // Hook'tan yeni fonksiyonları çekiyoruz

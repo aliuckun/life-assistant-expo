@@ -1,18 +1,21 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { Task } from '../types/task';
 
 export const usePlanner = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [selectedDate, setSelectedDate] = useState(new Date());
+    const isLoaded = useRef(false); // Race condition önleyici
 
     useEffect(() => {
         loadTasks();
     }, []);
 
+    // Sadece veriler yüklendikten SONRA kaydet
     useEffect(() => {
+        if (!isLoaded.current) return;
         saveTasks(tasks);
     }, [tasks]);
 
@@ -30,6 +33,8 @@ export const usePlanner = () => {
             if (jsonValue != null) setTasks(JSON.parse(jsonValue));
         } catch (e) {
             console.error("Yükleme hatası", e);
+        } finally {
+            isLoaded.current = true; // Yükleme tamamlandı, artık save aktif
         }
     };
 
@@ -41,7 +46,7 @@ export const usePlanner = () => {
         setTasks(prev => prev.map(task => {
             if (task.id === id) {
                 const newState = !task.isCompleted;
-                if (newState && onSuccess) onSuccess(); // Animasyon tetikleyici
+                if (newState && onSuccess) onSuccess();
                 return { ...task, isCompleted: newState };
             }
             return task;
@@ -55,7 +60,6 @@ export const usePlanner = () => {
         ]);
     };
 
-    // İstatistikler
     const currentDayTasks = tasks
         .filter(task => task.date === format(selectedDate, 'yyyy-MM-dd'))
         .sort((a, b) => {
@@ -69,7 +73,7 @@ export const usePlanner = () => {
     const progress = totalCount === 0 ? 0 : completedCount / totalCount;
 
     return {
-        tasks: currentDayTasks, // Sadece o günün tasklarını dönüyoruz
+        tasks: currentDayTasks,
         selectedDate,
         setSelectedDate,
         addTask,

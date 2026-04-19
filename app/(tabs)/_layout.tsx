@@ -39,9 +39,9 @@ export default function TabLayout() {
 
       {/* 4. Kalori */}
       <Tabs.Screen
-        name="calories"
+        name="habits"
         options={{
-          title: 'Kalori',
+          title: 'Alıskanlık',
           tabBarIcon: ({ color }) => <Ionicons name="nutrition" size={24} color={color} />,
         }}
       />

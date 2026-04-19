@@ -3,7 +3,6 @@ import LottieView from 'lottie-react-native';
 import React, { useRef, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-// Parçalanmış bileşenlerimizi ve hook'umuzu import ediyoruz
 import { AddTaskModal } from './components/AddTaskModal';
 import { DateStrip } from './components/DateStrip';
 import { ProgressBar } from './components/ProgressBar';
@@ -17,17 +16,12 @@ export default function PlannerScreen() {
     } = usePlanner();
 
     const [modalVisible, setModalVisible] = useState(false);
-
-    // Animasyonun görünürlüğünü kontrol eden state
     const [showConfetti, setShowConfetti] = useState(false);
-    const confettiRef = useRef<LottieView>(null);
+    const confettiRef = useRef<LottieView>(null); // ref artık LottieView'a bağlı
 
     const handleTaskToggle = (id: string) => {
         toggleTask(id, () => {
-            // Sadece görünür yapıyoruz, oynatma komutu vermemize gerek yok
             setShowConfetti(true);
-
-            // 1.7 saniye sonra ekrandan kaldır
             setTimeout(() => {
                 setShowConfetti(false);
             }, 1400);
@@ -37,20 +31,19 @@ export default function PlannerScreen() {
     return (
         <View style={styles.container}>
 
-            {/* Animasyon Katmanı: Sadece showConfetti true ise ekrana basılır */}
             {showConfetti && (
                 <View style={styles.lottieContainer} pointerEvents="none">
                     <LottieView
+                        ref={confettiRef}
                         source={require('../../assets/confetti.json')}
-                        autoPlay={true}  // <-- ÖNEMLİ: Ekrana geldiği an oynamaya başlar
-                        loop={false}     // Bir kere oynayıp dursun
+                        autoPlay={true}
+                        loop={false}
                         style={{ width: '100%', height: '100%' }}
                         resizeMode="cover"
                     />
                 </View>
             )}
 
-            {/* Header */}
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Planlayıcı</Text>
                 <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
@@ -58,7 +51,6 @@ export default function PlannerScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Bileşenler */}
             <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
             <ProgressBar progress={progress} />
@@ -82,7 +74,6 @@ export default function PlannerScreen() {
                 )}
             />
 
-            {/* Ekleme Modalı */}
             <AddTaskModal
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
@@ -95,7 +86,6 @@ export default function PlannerScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f8f9fa', paddingTop: 50 },
-    // Z-index yüksek tutularak diğer her şeyin üstüne çıkması sağlanır
     lottieContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, elevation: 999 },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 10 },
     headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#333' },
