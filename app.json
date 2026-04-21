@@ -7,44 +7,31 @@
     "icon": "./src/assets/images/bcg.png",
     "splash": {
       "image": "./src/assets/images/bcg.png",
-      "resizeMode": "cover", // ← tam ekran kaplar
-      "backgroundColor": "#ffffff"
+      "resizeMode": "cover",
+      "backgroundColor": "#F5F5F0"
     },
     "scheme": "lifeassistant",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "userInterfaceStyle": "light",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./src/assets/images/frg.png",
-        "backgroundImage": "./src/assets/images/frg.png",
-        "monochromeImage": "./src/assets/images/frg.png"
+        "foregroundImage": "./src/assets/images/bcg.png",
+        "backgroundImage": "./src/assets/images/bcg.png",
+        "monochromeImage": "./src/assets/images/bcg.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.lifeassistant"
     },
     "web": {
       "output": "static",
-      "favicon": "./src/assets/images/indir.png"
+      "favicon": "./src/assets/images/bcg.png"
     },
     "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./src/assets/images/bcg.png",
-          "imageWidth": 1000,
-          "resizeMode": "cover",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
-        }
-      ]
+      "expo-router"
     ],
     "experiments": {
       "typedRoutes": true,
