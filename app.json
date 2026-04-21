@@ -4,7 +4,12 @@
     "slug": "life-assistant",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/images/indir.png",
+    "icon": "./src/assets/images/bcg.png",
+    "splash": {
+      "image": "./src/assets/images/bcg.png",
+      "resizeMode": "cover", // ← tam ekran kaplar
+      "backgroundColor": "#ffffff"
+    },
     "scheme": "lifeassistant",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,9 +19,9 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./src/assets/images/indir.png",
-        "backgroundImage": "./src/assets/images/indir.png",
-        "monochromeImage": "./src/assets/images/indir.png"
+        "foregroundImage": "./src/assets/images/frg.png",
+        "backgroundImage": "./src/assets/images/frg.png",
+        "monochromeImage": "./src/assets/images/frg.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -31,9 +36,9 @@
       [
         "expo-splash-screen",
         {
-          "image": "./src/assets/images/indir.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
+          "image": "./src/assets/images/bcg.png",
+          "imageWidth": 1000,
+          "resizeMode": "cover",
           "backgroundColor": "#ffffff",
           "dark": {
             "backgroundColor": "#000000"
