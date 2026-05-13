@@ -156,10 +156,30 @@ export const useHabits = () => {
 
     const getDailyStreak = (habit: Habit): number => {
         let streak = 0;
-        let check = todayStr();
+        const today = todayStr();
 
-        while (check >= habit.createdAt) {
+        // Bugün tamamlandıysa bugünden başla, tamamlanmadıysa dünden başla
+        const todayCount = habit.dailyLog[today] ?? 0;
+        const todayOk = habit.type === 'good'
+            ? todayCount >= habit.targetCount
+            : todayCount <= habit.targetCount;
+
+        let check = todayOk ? today : (() => {
+            const d = parseDate(today);
+            d.setDate(d.getDate() - 1);
+            return toDateStr(d);
+        })();
+
+        // createdAt yerine 365 gün geriye limit koy.
+        // Kullanıcı geçmişe veri girebildiğinden createdAt streak'i kesmemeli.
+        const limitDate = new Date();
+        limitDate.setFullYear(limitDate.getFullYear() - 1);
+        const limitStr = toDateStr(limitDate);
+
+        while (check >= limitStr) {
             const count = habit.dailyLog[check] ?? 0;
+            // createdAt öncesi günler kayıt yok — good için 0 < target → seriyi keser.
+            // Ama kullanıcı o güne log girdiyse sayılmalı, girmemişse kesilmeli. Bu doğru davranış.
             const ok = habit.type === 'good' ? count >= habit.targetCount : count <= habit.targetCount;
             if (!ok) break;
             streak++;
@@ -172,10 +192,28 @@ export const useHabits = () => {
 
     const getWeeklyStreak = (habit: Habit): number => {
         let streak = 0;
-        let checkWeek = getWeekStartStr(todayStr());
+        const thisWeek = getWeekStartStr(todayStr());
         const createdWeek = getWeekStartStr(habit.createdAt);
 
-        while (checkWeek >= createdWeek) {
+        // Bu haftayı tamamladıysa bu haftadan başla, tamamlamadıysa geçen haftadan
+        const thisWeekCount = weekTotal(habit.dailyLog, thisWeek);
+        const thisWeekOk = habit.type === 'good'
+            ? thisWeekCount >= habit.targetCount
+            : thisWeekCount <= habit.targetCount;
+
+        let checkWeek = thisWeekOk ? thisWeek : (() => {
+            const d = parseDate(thisWeek);
+            d.setDate(d.getDate() - 7);
+            return getWeekStartStr(toDateStr(d));
+        })();
+
+        const limitWeek = (() => {
+            const d = new Date();
+            d.setFullYear(d.getFullYear() - 1);
+            return getWeekStartStr(toDateStr(d));
+        })();
+
+        while (checkWeek >= limitWeek) {
             const count = weekTotal(habit.dailyLog, checkWeek);
             const ok = habit.type === 'good' ? count >= habit.targetCount : count <= habit.targetCount;
             if (!ok) break;
@@ -189,10 +227,28 @@ export const useHabits = () => {
 
     const getMonthlyStreak = (habit: Habit): number => {
         let streak = 0;
-        let checkMonth = todayStr().slice(0, 7);
+        const thisMonth = todayStr().slice(0, 7);
         const createdMonth = habit.createdAt.slice(0, 7);
 
-        while (checkMonth >= createdMonth) {
+        // Bu ay tamamlandıysa bu aydan başla, tamamlanmadıysa geçen aydan
+        const thisMonthCount = monthTotal(habit.dailyLog, thisMonth + '-01');
+        const thisMonthOk = habit.type === 'good'
+            ? thisMonthCount >= habit.targetCount
+            : thisMonthCount <= habit.targetCount;
+
+        let checkMonth = thisMonthOk ? thisMonth : (() => {
+            const [y, m] = thisMonth.split('-').map(Number);
+            const d = new Date(y, m - 2, 1);
+            return toDateStr(d).slice(0, 7);
+        })();
+
+        const limitMonth = (() => {
+            const d = new Date();
+            d.setFullYear(d.getFullYear() - 1);
+            return toDateStr(d).slice(0, 7);
+        })();
+
+        while (checkMonth >= limitMonth) {
             const count = monthTotal(habit.dailyLog, checkMonth + '-01');
             const ok = habit.type === 'good' ? count >= habit.targetCount : count <= habit.targetCount;
             if (!ok) break;

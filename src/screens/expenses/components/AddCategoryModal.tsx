@@ -38,17 +38,29 @@ export const AddCategoryModal: React.FC<Props> = ({ visible, onClose, onAdd }) =
     const [name, setName] = useState('');
     const [color, setColor] = useState(COLORS[0]);
     const [icon, setIcon] = useState(ICONS[0]);
+    const [budget, setBudget] = useState('');
 
     const handleSave = () => {
         if (!name.trim()) {
             Alert.alert('Eksik Bilgi', 'Lütfen kategori adı girin.');
             return;
         }
-        onAdd({ name: name.trim(), color, icon });
+        const budgetVal = budget.trim() ? parseFloat(budget.replace(',', '.')) : undefined;
+        onAdd({
+            name: name.trim(),
+            color,
+            icon,
+            budget: budgetVal && !isNaN(budgetVal) ? budgetVal : undefined,
+        });
+        reset();
+        onClose();
+    };
+
+    const reset = () => {
         setName('');
         setColor(COLORS[0]);
         setIcon(ICONS[0]);
-        onClose();
+        setBudget('');
     };
 
     return (
@@ -60,12 +72,14 @@ export const AddCategoryModal: React.FC<Props> = ({ visible, onClose, onAdd }) =
                 <View style={styles.sheet}>
                     <View style={styles.header}>
                         <Text style={styles.headerTitle}>Yeni Kategori</Text>
-                        <TouchableOpacity onPress={onClose}>
+                        <TouchableOpacity onPress={() => { reset(); onClose(); }}>
                             <MaterialCommunityIcons name="close" size={22} color="#888" />
                         </TouchableOpacity>
                     </View>
 
                     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+
+                        {/* Kategori adı */}
                         <Text style={styles.label}>Kategori Adı *</Text>
                         <TextInput
                             style={styles.input}
@@ -75,6 +89,20 @@ export const AddCategoryModal: React.FC<Props> = ({ visible, onClose, onAdd }) =
                             autoFocus
                         />
 
+                        {/* Aylık bütçe limiti */}
+                        <Text style={styles.label}>Aylık Bütçe Limiti (opsiyonel)</Text>
+                        <View style={styles.budgetRow}>
+                            <Text style={styles.currencySign}>₺</Text>
+                            <TextInput
+                                style={styles.budgetInput}
+                                placeholder="0,00"
+                                value={budget}
+                                onChangeText={setBudget}
+                                keyboardType="decimal-pad"
+                            />
+                        </View>
+
+                        {/* Renk */}
                         <Text style={styles.label}>Renk</Text>
                         <View style={styles.colorRow}>
                             {COLORS.map(c => (
@@ -86,6 +114,7 @@ export const AddCategoryModal: React.FC<Props> = ({ visible, onClose, onAdd }) =
                             ))}
                         </View>
 
+                        {/* İkon */}
                         <Text style={styles.label}>İkon</Text>
                         <View style={styles.iconRow}>
                             {ICONS.map(ic => (
@@ -119,11 +148,14 @@ export const AddCategoryModal: React.FC<Props> = ({ visible, onClose, onAdd }) =
 
 const styles = StyleSheet.create({
     overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
-    sheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '85%' },
+    sheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '90%' },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
     headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#222' },
     label: { fontSize: 13, fontWeight: '600', color: '#777', marginTop: 16, marginBottom: 8 },
     input: { backgroundColor: '#F5F7FA', padding: 13, borderRadius: 12, fontSize: 15, color: '#333', borderWidth: 1, borderColor: '#eee' },
+    budgetRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F5F7FA', borderRadius: 12, borderWidth: 1, borderColor: '#eee', paddingHorizontal: 14 },
+    currencySign: { fontSize: 20, fontWeight: '700', color: '#333', marginRight: 6 },
+    budgetInput: { flex: 1, fontSize: 18, fontWeight: '600', color: '#333', paddingVertical: 12 },
     colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     colorDot: { width: 36, height: 36, borderRadius: 18 },
     colorDotSelected: { borderWidth: 3, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.25, elevation: 4 },

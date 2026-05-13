@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors, rs } from '../../../styles';
 import { Habit, HabitStatus } from '../types/habit';
 import { StreakBadge } from './StreakBadge';
 
@@ -12,21 +13,17 @@ interface Props {
     onIncrement: () => void;
     onDecrement: () => void;
     onLongPress: () => void;
+    onDetail: () => void;
 }
 
 const PERIOD_LABEL: Record<string, string> = {
-    daily: 'bugün',
-    weekly: 'bu hafta',
-    monthly: 'bu ay',
+    daily: 'bugün', weekly: 'bu hafta', monthly: 'bu ay',
 };
 
-// Yeşil → Sarı → Kırmızı
 const interpolateColor = (count: number, limit: number): string => {
     if (limit === 0) return '#43A047';
     const ratio = Math.min(count / limit, 1);
-
     let r: number, g: number, b: number;
-
     if (ratio <= 0.5) {
         const t = ratio / 0.5;
         r = Math.round(67 + (255 - 67) * t);
@@ -38,13 +35,12 @@ const interpolateColor = (count: number, limit: number): string => {
         g = Math.round(193 + (57 - 193) * t);
         b = Math.round(7 + (53 - 7) * t);
     }
-
     return `rgb(${r},${g},${b})`;
 };
 
 export const HabitCard: React.FC<Props> = ({
     habit, status, streak, isReadOnly,
-    onIncrement, onDecrement, onLongPress,
+    onIncrement, onDecrement, onLongPress, onDetail,
 }) => {
     const { count, isCompleted, isOverLimit } = status;
 
@@ -52,15 +48,12 @@ export const HabitCard: React.FC<Props> = ({
         ? interpolateColor(count, habit.targetCount)
         : habit.color;
 
-    const isSimpleDaily =
-        habit.frequency === 'daily' &&
-        habit.targetCount === 1 &&
-        habit.type === 'good';
+    const isSimpleDaily = habit.frequency === 'daily' && habit.targetCount === 1 && habit.type === 'good';
 
     const renderAction = () => {
         if (isReadOnly) {
             return (
-                <View style={styles.readOnlyBadge}>
+                <View style={[styles.readOnlyBadge, { backgroundColor: accent + '15' }]}>
                     <Text style={[styles.readOnlyText, { color: accent }]}>
                         {count}/{habit.targetCount}
                     </Text>
@@ -73,14 +66,13 @@ export const HabitCard: React.FC<Props> = ({
                 <TouchableOpacity
                     style={[
                         styles.check,
-                        isCompleted && { backgroundColor: habit.color, borderColor: habit.color },
+                        { borderColor: isCompleted ? accent : '#e0e0e0' },
+                        isCompleted && { backgroundColor: accent },
                     ]}
                     onPress={isCompleted ? onDecrement : onIncrement}
                     activeOpacity={0.7}
                 >
-                    {isCompleted && (
-                        <MaterialCommunityIcons name="check" size={18} color="#fff" />
-                    )}
+                    {isCompleted && <MaterialCommunityIcons name="check" size={rs(17)} color="#fff" />}
                 </TouchableOpacity>
             );
         }
@@ -93,24 +85,17 @@ export const HabitCard: React.FC<Props> = ({
                     disabled={count === 0}
                     activeOpacity={0.7}
                 >
-                    <MaterialCommunityIcons
-                        name="minus"
-                        size={15}
-                        color={count === 0 ? '#ddd' : '#888'}
-                    />
+                    <MaterialCommunityIcons name="minus" size={rs(14)} color={count === 0 ? '#ddd' : '#888'} />
                 </TouchableOpacity>
-
                 <Text style={[styles.cValue, { color: accent }]}>
-                    {count}
-                    <Text style={styles.cTarget}>/{habit.targetCount}</Text>
+                    {count}<Text style={styles.cTarget}>/{habit.targetCount}</Text>
                 </Text>
-
                 <TouchableOpacity
-                    style={[styles.cBtn, { backgroundColor: 'rgba(0,0,0,0.06)' }]}
+                    style={[styles.cBtn, { backgroundColor: accent + '15' }]}
                     onPress={onIncrement}
                     activeOpacity={0.7}
                 >
-                    <MaterialCommunityIcons name="plus" size={15} color={accent} />
+                    <MaterialCommunityIcons name="plus" size={rs(14)} color={accent} />
                 </TouchableOpacity>
             </View>
         );
@@ -122,21 +107,16 @@ export const HabitCard: React.FC<Props> = ({
             if (habit.type === 'bad') {
                 return (
                     <Text style={[styles.sub, isOverLimit && styles.subDanger]}>
-                        {isOverLimit
-                            ? `⚠ ${period} limit aşıldı`
-                            : `${period} limit: ${habit.targetCount}`}
+                        {isOverLimit ? `⚠ ${period} limit aşıldı` : `${period} limit: ${habit.targetCount}`}
                     </Text>
                 );
             }
             return (
                 <Text style={styles.sub}>
-                    {isCompleted
-                        ? `✓ ${period} hedef tamamlandı`
-                        : `${period}: ${count}/${habit.targetCount}`}
+                    {isCompleted ? `✓ ${period} hedef tamamlandı` : `${period}: ${count}/${habit.targetCount}`}
                 </Text>
             );
         }
-
         if (habit.type === 'bad') {
             return (
                 <Text style={[styles.sub, isOverLimit && styles.subDanger]}>
@@ -144,7 +124,6 @@ export const HabitCard: React.FC<Props> = ({
                 </Text>
             );
         }
-
         return <StreakBadge streak={streak} frequency={habit.frequency} />;
     };
 
@@ -159,25 +138,33 @@ export const HabitCard: React.FC<Props> = ({
             activeOpacity={0.85}
             delayLongPress={400}
         >
-            <View style={[styles.icon, { backgroundColor: `rgba(0,0,0,0.06)` }]}>
-                <MaterialCommunityIcons
-                    name={habit.icon as any}
-                    size={24}
-                    color={accent}
-                />
+            {/* Sol renkli çizgi */}
+            <View style={[styles.accentBar, { backgroundColor: isOverLimit ? Colors.danger : accent }]} />
+
+            {/* İkon */}
+            <View style={[styles.iconBg, { backgroundColor: accent + '15' }]}>
+                <MaterialCommunityIcons name={habit.icon as any} size={rs(22)} color={accent} />
             </View>
 
+            {/* İçerik */}
             <View style={styles.content}>
-                <Text
-                    style={[styles.title, isCompleted && styles.titleDone]}
-                    numberOfLines={1}
-                >
+                <Text style={[styles.title, isCompleted && styles.titleDone]} numberOfLines={1}>
                     {habit.title}
                 </Text>
                 {renderSubtitle()}
             </View>
 
+            {/* Aksiyon */}
             {renderAction()}
+
+            {/* Detay butonu */}
+            <TouchableOpacity
+                style={styles.detailBtn}
+                onPress={onDetail}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+                <MaterialCommunityIcons name="chart-bar" size={rs(15)} color="#ccc" />
+            </TouchableOpacity>
         </TouchableOpacity>
     );
 };
@@ -186,60 +173,61 @@ const styles = StyleSheet.create({
     card: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 14,
-        marginBottom: 10,
+        backgroundColor: Colors.surface,
+        borderRadius: rs(16),
+        marginBottom: rs(10),
+        overflow: 'hidden',
         shadowColor: '#000',
         shadowOpacity: 0.05,
-        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 6,
         elevation: 2,
+        paddingVertical: rs(12),
+        paddingRight: rs(10),
     },
-    cardDone: { opacity: 0.6 },
-    cardOver: {
-        borderWidth: 1,
-        borderColor: '#FFCDD2',
-        backgroundColor: '#FFF8F8',
+    cardDone: { opacity: 0.55 },
+    cardOver: { backgroundColor: '#FFF5F5' },
+
+    accentBar: {
+        width: rs(3),
+        alignSelf: 'stretch',
+        borderRadius: rs(2),
+        marginRight: rs(12),
+        marginLeft: rs(4),
     },
-    icon: {
-        width: 48,
-        height: 48,
-        borderRadius: 14,
+
+    iconBg: {
+        width: rs(44),
+        height: rs(44),
+        borderRadius: rs(13),
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: rs(12),
     },
+
     content: { flex: 1 },
-    title: { fontSize: 15, fontWeight: '600', color: '#333', marginBottom: 3 },
+    title: { fontSize: rs(14), fontWeight: '600', color: '#333', marginBottom: rs(3) },
     titleDone: { color: '#bbb', textDecorationLine: 'line-through' },
-    sub: { fontSize: 11, color: '#aaa' },
-    subDanger: { color: '#E53935', fontWeight: '600' },
-    readOnlyBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        backgroundColor: '#f0f0f0',
-        borderRadius: 8,
-    },
-    readOnlyText: { fontSize: 13, fontWeight: 'bold' },
+    sub: { fontSize: rs(11), color: '#aaa' },
+    subDanger: { color: Colors.danger, fontWeight: '600' },
+
+    readOnlyBadge: { paddingHorizontal: rs(10), paddingVertical: rs(5), borderRadius: rs(10) },
+    readOnlyText: { fontSize: rs(13), fontWeight: '700' },
+
     check: {
-        width: 34,
-        height: 34,
-        borderRadius: 17,
+        width: rs(36),
+        height: rs(36),
+        borderRadius: rs(18),
         borderWidth: 2,
-        borderColor: '#ddd',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    counter: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-    cBtn: {
-        width: 28,
-        height: 28,
-        borderRadius: 8,
-        backgroundColor: '#f2f2f2',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
+
+    counter: { flexDirection: 'row', alignItems: 'center', gap: rs(5) },
+    cBtn: { width: rs(28), height: rs(28), borderRadius: rs(8), backgroundColor: '#f2f2f2', justifyContent: 'center', alignItems: 'center' },
     cBtnDisabled: { backgroundColor: '#fafafa' },
-    cValue: { fontSize: 14, fontWeight: 'bold', minWidth: 36, textAlign: 'center' },
-    cTarget: { fontSize: 11, fontWeight: '400', color: '#ccc' },
+    cValue: { fontSize: rs(13), fontWeight: '800', minWidth: rs(36), textAlign: 'center' },
+    cTarget: { fontSize: rs(10), fontWeight: '400', color: '#ccc' },
+
+    detailBtn: { marginLeft: rs(6), padding: rs(4) },
 });

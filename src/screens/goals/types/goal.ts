@@ -1,15 +1,18 @@
-// src/screens/goals/types.ts
+// src/screens/goals/types/goal.ts
 
 export interface Goal {
     id: string;
     title: string;
     description: string;
-    targetCount: number; // Örn: 20 sayfa
+    targetCount: number;
     currentCount: number;
-    unit: string; // Örn: 'sayfa', 'dk'
+    unit: string;
     color: string;
-    icon: string; // MaterialCommunityIcons adı
-    completedDays: string[]; // 'YYYY-MM-DD' formatında tamamlanan günler
+    icon: string;
+    completedDays: string[];          // 'YYYY-MM-DD'
+    notes: Record<string, string>;    // { 'YYYY-MM-DD': 'not metni' }
+    isArchived: boolean;
+    archivedAt?: string;              // 'YYYY-MM-DD'
 }
 
 export interface WeeklyStats {
@@ -19,9 +22,21 @@ export interface WeeklyStats {
     dayStreak: number;
 }
 
+export interface HistoryGoalDetail {
+    goalId: string;
+    title: string;
+    icon: string;
+    color: string;
+    completedDays: string[];   // o haftaya ait tamamlanan günler
+    targetCount: number;       // o haftanın hedef gün sayısı
+}
+
 export interface HistoryItem {
-    week: string;        // Örn: "11 Aralık Haftası"
-    completedRate: number; // Örn: 85
-    label: string;       // Örn: "7 gün önce"
-    color: string;       // Başarıya göre renk
+    week: string;
+    completedRate: number;
+    label: string;
+    color: string;
+    startDate: string;         // 'YYYY-MM-DD' — haftanın Pazartesi'si
+    endDate: string;           // 'YYYY-MM-DD' — haftanın Pazar'ı
+    goals: HistoryGoalDetail[];
 }

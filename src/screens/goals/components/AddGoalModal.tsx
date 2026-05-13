@@ -5,6 +5,8 @@ import {
     Alert // <--- Alert eklendi
     ,
 
+
+
     KeyboardAvoidingView,
     Modal,
     Platform,
@@ -35,7 +37,6 @@ export const AddGoalModal: React.FC<Props> = ({ visible, onClose, onAdd }) => {
     const [selectedIcon, setSelectedIcon] = useState(ICONS[0]);
 
     const handleSave = () => {
-        console.log("Kaydet butonuna basıldı..."); // Debug için log
 
         // 1. Validasyon Kontrolü
         if (!title.trim() || !target.trim() || !unit.trim()) {
@@ -53,7 +54,6 @@ export const AddGoalModal: React.FC<Props> = ({ visible, onClose, onAdd }) => {
             icon: selectedIcon,
         };
 
-        console.log("Gönderilecek Veri:", newGoalData);
 
         // 3. Fonksiyonu Çalıştır
         onAdd(newGoalData);

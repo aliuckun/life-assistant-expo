@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors, rs } from '../../../styles';
 import { MonthSummary } from '../types/expense';
 
 interface Props {
@@ -8,15 +9,17 @@ interface Props {
     onSelect: (monthStr: string) => void;
 }
 
-const fmt = (amount: number): string => {
-    if (amount >= 1000) return `₺${(amount / 1000).toFixed(1)}B`;
-    return `₺${Math.round(amount)}`;
+const fmt = (n: number): string => {
+    if (n >= 1000) return `₺${(n / 1000).toFixed(1)}B`;
+    return `₺${Math.round(n)}`;
 };
 
-import { TouchableOpacity } from 'react-native';
+const fmtFull = (n: number) =>
+    n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export const PastMonths: React.FC<Props> = ({ data, selectedMonth, onSelect }) => {
     const maxExpense = Math.max(...data.map(d => d.expense), 1);
+    const selected = data.find(d => d.monthStr === selectedMonth);
 
     return (
         <View style={styles.container}>
@@ -25,113 +28,135 @@ export const PastMonths: React.FC<Props> = ({ data, selectedMonth, onSelect }) =
             {/* Bar chart */}
             <View style={styles.chart}>
                 {data.map(item => {
-                    const isSelected = item.monthStr === selectedMonth;
-                    const barH = Math.max((item.expense / maxExpense) * 80, 4);
+                    const isSel = item.monthStr === selectedMonth;
+                    const barH = Math.max((item.expense / maxExpense) * rs(72), rs(4));
+                    const hasData = item.expense > 0 || item.income > 0;
 
                     return (
                         <TouchableOpacity
                             key={item.monthStr}
                             style={styles.col}
                             onPress={() => onSelect(item.monthStr)}
-                            activeOpacity={0.7}
+                            activeOpacity={0.75}
                         >
-                            {/* Gider bar */}
-                            <View style={styles.barContainer}>
-                                <View
-                                    style={[
-                                        styles.bar,
-                                        {
-                                            height: barH,
-                                            backgroundColor: isSelected ? '#007AFF' : '#E0E0E0',
-                                        },
-                                    ]}
-                                />
-                            </View>
-
-                            {/* Tutar */}
-                            <Text style={[styles.barAmount, isSelected && { color: '#007AFF' }]}>
-                                {fmt(item.expense)}
+                            <Text style={[styles.barAmt, isSel && { color: Colors.primary, fontWeight: '700' }]}>
+                                {hasData ? fmt(item.expense) : ''}
                             </Text>
-
-                            {/* Ay etiketi */}
-                            <Text style={[styles.monthLabel, isSelected && { color: '#007AFF', fontWeight: '700' }]}>
+                            <View style={styles.barTrack}>
+                                <View style={[
+                                    styles.barFill,
+                                    { height: barH, backgroundColor: isSel ? Colors.primary : '#D0D0D0' },
+                                ]} />
+                            </View>
+                            <Text style={[styles.monthLabel, isSel && { color: Colors.primary, fontWeight: '700' }]}>
                                 {item.label.slice(0, 3)}
                             </Text>
+                            {isSel && <View style={styles.selectedDot} />}
                         </TouchableOpacity>
                     );
                 })}
             </View>
 
             {/* Seçili ay detayı */}
-            {data.map(item => {
-                if (item.monthStr !== selectedMonth) return null;
-                return (
-                    <View key={item.monthStr} style={styles.detail}>
-                        <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Gelir</Text>
-                            <Text style={[styles.detailValue, { color: '#43A047' }]}>
-                                +₺{item.income.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                            </Text>
-                        </View>
-                        <View style={styles.detailDivider} />
-                        <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Gider</Text>
-                            <Text style={[styles.detailValue, { color: '#E53935' }]}>
-                                -₺{item.expense.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                            </Text>
-                        </View>
-                        <View style={styles.detailDivider} />
-                        <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Net</Text>
-                            <Text style={[styles.detailValue, { color: item.net >= 0 ? '#43A047' : '#E53935' }]}>
-                                {item.net >= 0 ? '+' : ''}₺{item.net.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                            </Text>
-                        </View>
+            {selected && (
+                <View style={styles.detail}>
+                    <View style={styles.detailItem}>
+                        <Text style={styles.detailLabel}>Gelir</Text>
+                        <Text style={[styles.detailValue, { color: Colors.success }]}>
+                            +₺{fmtFull(selected.income)}
+                        </Text>
                     </View>
-                );
-            })}
+                    <View style={styles.detailDivider} />
+                    <View style={styles.detailItem}>
+                        <Text style={styles.detailLabel}>Gider</Text>
+                        <Text style={[styles.detailValue, { color: Colors.danger }]}>
+                            -₺{fmtFull(selected.expense)}
+                        </Text>
+                    </View>
+                    <View style={styles.detailDivider} />
+                    <View style={styles.detailItem}>
+                        <Text style={styles.detailLabel}>Net</Text>
+                        <Text style={[styles.detailValue, {
+                            color: selected.net >= 0 ? Colors.success : Colors.danger
+                        }]}>
+                            {selected.net >= 0 ? '+' : ''}₺{fmtFull(selected.net)}
+                        </Text>
+                    </View>
+                </View>
+            )}
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 16,
+        backgroundColor: Colors.surface,
+        borderRadius: rs(16),
+        padding: rs(16),
+        marginBottom: rs(16),
+        shadowColor: '#000',
+        shadowOpacity: 0.04,
+        shadowOffset: { width: 0, height: 1 },
+        elevation: 2,
     },
-    title: { fontSize: 15, fontWeight: '700', color: '#333', marginBottom: 16 },
+    title: {
+        fontSize: rs(15),
+        fontWeight: '700',
+        color: '#333',
+        marginBottom: rs(14),
+    },
     chart: {
         flexDirection: 'row',
         alignItems: 'flex-end',
         justifyContent: 'space-between',
-        height: 120,
-        marginBottom: 8,
+        height: rs(110),
+        marginBottom: rs(4),
     },
     col: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'flex-end',
+        gap: rs(3),
     },
-    barContainer: {
-        width: '60%',
-        height: 80,
+    barAmt: {
+        fontSize: rs(9),
+        color: Colors.textLight,
+        marginBottom: rs(2),
+    },
+    barTrack: {
+        width: rs(22),
+        height: rs(72),
         justifyContent: 'flex-end',
+        borderRadius: rs(5),
+        backgroundColor: '#F5F5F5',
+        overflow: 'hidden',
     },
-    bar: { width: '100%', borderRadius: 4 },
-    barAmount: { fontSize: 9, color: '#aaa', marginTop: 4 },
-    monthLabel: { fontSize: 10, color: '#999', marginTop: 2 },
-    // Detay satırı
+    barFill: {
+        width: '100%',
+        borderRadius: rs(5),
+    },
+    monthLabel: {
+        fontSize: rs(10),
+        color: Colors.textLight,
+        fontWeight: '500',
+    },
+    selectedDot: {
+        width: rs(4),
+        height: rs(4),
+        borderRadius: rs(2),
+        backgroundColor: Colors.primary,
+    },
+
+    // Seçili ay detayı
     detail: {
         flexDirection: 'row',
         borderTopWidth: 1,
-        borderTopColor: '#f0f0f0',
-        paddingTop: 12,
-        marginTop: 4,
+        borderTopColor: Colors.divider,
+        paddingTop: rs(12),
+        marginTop: rs(8),
     },
-    detailItem: { flex: 1, alignItems: 'center' },
-    detailDivider: { width: 1, backgroundColor: '#f0f0f0' },
-    detailLabel: { fontSize: 11, color: '#aaa', marginBottom: 3 },
-    detailValue: { fontSize: 13, fontWeight: '600' },
+    detailItem: { flex: 1, alignItems: 'center', gap: rs(3) },
+    detailDivider: { width: 1, backgroundColor: Colors.divider, marginVertical: rs(2) },
+    detailLabel: { fontSize: rs(11), color: Colors.textLight, fontWeight: '500' },
+    detailValue: { fontSize: rs(13), fontWeight: '700' },
 });

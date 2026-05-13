@@ -1,29 +1,62 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { Colors, rs } from '../../../styles';
 
-interface ProgressBarProps {
+interface Props {
     progress: number;
+    completed: number;
+    total: number;
 }
 
-export const ProgressBar = ({ progress }: ProgressBarProps) => {
+export const ProgressBar = ({ progress, completed, total }: Props) => {
+    const pct = Math.round(progress * 100);
+    const isDone = pct === 100 && total > 0;
+    const barColor = isDone ? Colors.success : Colors.primary;
+
     return (
-        <View style={styles.progressContainer}>
-            <View style={styles.progressTextContainer}>
-                <Text style={styles.progressLabel}>Günlük İlerleme</Text>
-                <Text style={styles.progressPercent}>%{Math.round(progress * 100)}</Text>
+        <View style={styles.container}>
+            <View style={styles.row}>
+                <Text style={styles.label}>
+                    {isDone ? '🎉 Tüm görevler tamamlandı!' : 'Günlük İlerleme'}
+                </Text>
+                <Text style={[styles.pct, { color: barColor }]}>
+                    {completed}/{total}
+                </Text>
             </View>
-            <View style={styles.progressBarBackground}>
-                <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
+            <View style={styles.bg}>
+                <View style={[styles.fill, { width: `${pct}%`, backgroundColor: barColor }]} />
             </View>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    progressContainer: { paddingHorizontal: 20, marginTop: 10, marginBottom: 10 },
-    progressTextContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
-    progressLabel: { color: '#666', fontWeight: '600' },
-    progressPercent: { color: '#007AFF', fontWeight: 'bold' },
-    progressBarBackground: { height: 8, backgroundColor: '#e0e0e0', borderRadius: 4 },
-    progressBarFill: { height: '100%', backgroundColor: '#007AFF', borderRadius: 4 },
+    container: {
+        paddingHorizontal: rs(20),
+        paddingVertical: rs(10),
+    },
+    row: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: rs(6),
+    },
+    label: {
+        fontSize: rs(13),
+        fontWeight: '600',
+        color: Colors.textSecondary,
+    },
+    pct: {
+        fontSize: rs(13),
+        fontWeight: '700',
+    },
+    bg: {
+        height: rs(6),
+        backgroundColor: Colors.divider,
+        borderRadius: rs(3),
+    },
+    fill: {
+        height: rs(6),
+        borderRadius: rs(3),
+    },
 });

@@ -47,9 +47,17 @@ export const useGoals = () => {
         }).length;
     };
 
+    const toDateStr = (d: Date): string => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
+
     const getHistory = (): HistoryItem[] => {
         const historyData: HistoryItem[] = [];
         const currentWeekMonday = getMonday(new Date());
+        const MONTHS_TR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
 
         for (let i = 1; i <= 3; i++) {
             const startOfWeek = new Date(currentWeekMonday);
@@ -62,14 +70,24 @@ export const useGoals = () => {
             let totalTarget = 0;
             let totalDone = 0;
 
-            goals.forEach(goal => {
-                totalTarget += goal.targetCount;
-                const doneInWeek = goal.completedDays.filter(dateStr => {
-                    const d = new Date(dateStr);
+            const allGoals = goals; // aktif + arşivlenenler dahil (goals state hepsi)
+
+            const goalDetails = allGoals.map(goal => {
+                const daysInWeek = goal.completedDays.filter(dateStr => {
+                    const d = new Date(dateStr.replace(/-/g, '/'));
                     return d >= startOfWeek && d <= endOfWeek;
-                }).length;
-                totalDone += doneInWeek;
-            });
+                });
+                totalTarget += goal.targetCount;
+                totalDone += daysInWeek.length;
+                return {
+                    goalId: goal.id,
+                    title: goal.title,
+                    icon: goal.icon,
+                    color: goal.color,
+                    completedDays: daysInWeek,
+                    targetCount: goal.targetCount,
+                };
+            }).filter(g => g.targetCount > 0);
 
             const rate = totalTarget > 0 ? Math.round((totalDone / totalTarget) * 100) : 0;
 
@@ -78,13 +96,14 @@ export const useGoals = () => {
             else if (rate >= 50) color = '#FFD740';
             else if (rate > 0) color = '#FF6D00';
 
-            const monthName = startOfWeek.toLocaleDateString('tr-TR', { month: 'long' });
-
             historyData.push({
-                week: `${startOfWeek.getDate()} ${monthName} Haftası`,
+                week: `${startOfWeek.getDate()} ${MONTHS_TR[startOfWeek.getMonth()]} Haftası`,
                 completedRate: rate,
                 label: `${i * 7} gün önce`,
                 color,
+                startDate: toDateStr(startOfWeek),
+                endDate: toDateStr(endOfWeek),
+                goals: goalDetails,
             });
         }
 
@@ -144,6 +163,8 @@ export const useGoals = () => {
                 const corrected = parsed.map(goal => ({
                     ...goal,
                     currentCount: getThisWeekCountFromData(goal),
+                    notes: goal.notes ?? {},
+                    isArchived: goal.isArchived ?? false,
                 }));
                 setGoals(corrected);
             } else {
@@ -177,14 +198,46 @@ export const useGoals = () => {
         }
     };
 
-    const addGoal = (newGoalData: Omit<Goal, 'id' | 'currentCount' | 'completedDays'>) => {
+    const addGoal = (newGoalData: Omit<Goal, 'id' | 'currentCount' | 'completedDays' | 'notes' | 'isArchived'>) => {
         const newGoal: Goal = {
             id: Date.now().toString(),
             currentCount: 0,
             completedDays: [],
+            notes: {},
+            isArchived: false,
             ...newGoalData,
         };
         setGoals(prev => [...prev, newGoal]);
+    };
+
+    // Belirli bir güne not ekle / güncelle
+    const addNote = (goalId: string, date: string, note: string) => {
+        setGoals(prev => prev.map(g => {
+            if (g.id !== goalId) return g;
+            const newNotes = { ...g.notes };
+            if (note.trim() === '') {
+                delete newNotes[date];
+            } else {
+                newNotes[date] = note.trim();
+            }
+            return { ...g, notes: newNotes };
+        }));
+    };
+
+    // Hedefi arşivle
+    const archiveGoal = (goalId: string) => {
+        const today = new Date();
+        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        setGoals(prev => prev.map(g =>
+            g.id === goalId ? { ...g, isArchived: true, archivedAt: dateStr } : g
+        ));
+    };
+
+    // Arşivden geri al
+    const unarchiveGoal = (goalId: string) => {
+        setGoals(prev => prev.map(g =>
+            g.id === goalId ? { ...g, isArchived: false, archivedAt: undefined } : g
+        ));
     };
 
     const getStats = (): WeeklyStats => {
@@ -227,14 +280,23 @@ export const useGoals = () => {
         };
     };
 
+    // Aktif ve arşivlenmiş hedefleri ayır
+    const activeGoals = goals.filter(g => !g.isArchived);
+    const archivedGoals = goals.filter(g => g.isArchived);
+
     return {
-        goals,
+        goals: activeGoals,
+        archivedGoals,
         loading,
         addGoal,
+        addNote,
+        archiveGoal,
+        unarchiveGoal,
         toggleDayCompletion,
         getStats,
         getWeekDate,
         removeGoal,
         getHistory,
+        reload: loadGoals,
     };
 };

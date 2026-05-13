@@ -1,36 +1,71 @@
-import { addDays, format, isSameDay } from 'date-fns';
+import { addDays, format, isSameDay, isToday } from 'date-fns';
 import { tr } from 'date-fns/locale';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors, rs } from '../../../styles';
 
-interface DateStripProps {
+interface Props {
     selectedDate: Date;
     onSelectDate: (date: Date) => void;
 }
 
-export const DateStrip = ({ selectedDate, onSelectDate }: DateStripProps) => {
-    const dates = Array.from({ length: 7 }, (_, i) => {
-        const tomorrow = addDays(new Date(), 1); // Referans noktası: Yarın
-        return addDays(tomorrow, -(6 - i));           // i=0 ise Yarın, i=1 ise Bugün, i=2 ise Dün...
-    });
+// DateStrip: bugünden 5 gün öncesi → bugün → yarın (7 gün)
+const buildDates = () =>
+    Array.from({ length: 14 }, (_, i) => addDays(new Date(), i - 5));
+
+export const DateStrip = ({ selectedDate, onSelectDate }: Props) => {
+    const scrollRef = useRef<ScrollView>(null);
+    const dates = buildDates();
+
+    // Açılışta bugünü ortaya getir (5. eleman)
+    useEffect(() => {
+        setTimeout(() => {
+            scrollRef.current?.scrollTo({ x: rs(5) * (rs(64) + rs(10)), animated: false });
+        }, 50);
+    }, []);
 
     return (
         <View style={styles.container}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 15 }}>
-                {dates.map((date, index) => {
+            <ScrollView
+                ref={scrollRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.scroll}
+            >
+                {dates.map((date, i) => {
                     const isSelected = isSameDay(date, selectedDate);
+                    const todayFlag = isToday(date);
+                    const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+
                     return (
                         <TouchableOpacity
-                            key={index}
-                            style={[styles.dateCard, isSelected && styles.selectedDateCard]}
+                            key={i}
+                            style={[
+                                styles.card,
+                                isSelected && styles.cardSelected,
+                                todayFlag && !isSelected && styles.cardToday,
+                            ]}
                             onPress={() => onSelectDate(date)}
+                            activeOpacity={0.75}
                         >
-                            <Text style={[styles.dayText, isSelected && styles.selectedText]}>
-                                {format(date, 'EEE', { locale: tr })}
+                            <Text style={[
+                                styles.dayText,
+                                isSelected && styles.textSelected,
+                                todayFlag && !isSelected && styles.dayTextToday,
+                                isPast && !isSelected && styles.textPast,
+                            ]}>
+                                {format(date, 'EEE', { locale: tr }).toUpperCase()}
                             </Text>
-                            <Text style={[styles.dateText, isSelected && styles.selectedText]}>
+                            <Text style={[
+                                styles.dateNum,
+                                isSelected && styles.textSelected,
+                                isPast && !isSelected && styles.textPast,
+                            ]}>
                                 {format(date, 'd')}
                             </Text>
+                            {todayFlag && (
+                                <View style={[styles.todayDot, isSelected && styles.todayDotSelected]} />
+                            )}
                         </TouchableOpacity>
                     );
                 })}
@@ -39,11 +74,63 @@ export const DateStrip = ({ selectedDate, onSelectDate }: DateStripProps) => {
     );
 };
 
+const CARD_W = rs(56);
+
 const styles = StyleSheet.create({
-    container: { height: 100, marginTop: 10 },
-    dateCard: { width: 60, height: 80, backgroundColor: '#fff', borderRadius: 12, marginRight: 10, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5 },
-    selectedDateCard: { backgroundColor: '#007AFF' },
-    dayText: { fontSize: 14, color: '#999', marginBottom: 5 },
-    dateText: { fontSize: 20, fontWeight: 'bold', color: '#333' },
-    selectedText: { color: '#fff' },
+    container: { marginTop: rs(6), marginBottom: rs(2) },
+    scroll: { paddingHorizontal: rs(16), gap: rs(8), paddingVertical: rs(4) },
+
+    card: {
+        width: CARD_W,
+        paddingVertical: rs(10),
+        borderRadius: rs(14),
+        alignItems: 'center',
+        backgroundColor: Colors.surface,
+        shadowColor: '#000',
+        shadowOpacity: 0.04,
+        shadowOffset: { width: 0, height: 1 },
+        shadowRadius: 3,
+        elevation: 1,
+        gap: rs(3),
+    },
+    cardSelected: {
+        backgroundColor: Colors.primary,
+        shadowOpacity: 0.15,
+        elevation: 4,
+    },
+    cardToday: {
+        borderWidth: 1.5,
+        borderColor: Colors.primary,
+    },
+
+    dayText: {
+        fontSize: rs(10),
+        fontWeight: '700',
+        color: Colors.textLight,
+        letterSpacing: 0.3,
+    },
+    dayTextToday: {
+        color: Colors.primary,
+    },
+    dateNum: {
+        fontSize: rs(18),
+        fontWeight: '800',
+        color: Colors.textSecondary,
+    },
+    textSelected: {
+        color: '#fff',
+    },
+    textPast: {
+        color: Colors.textFaint,
+    },
+    todayDot: {
+        width: rs(4),
+        height: rs(4),
+        borderRadius: rs(2),
+        backgroundColor: Colors.primary,
+        marginTop: rs(1),
+    },
+    todayDotSelected: {
+        backgroundColor: 'rgba(255,255,255,0.7)',
+    },
 });

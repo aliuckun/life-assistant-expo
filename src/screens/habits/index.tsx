@@ -1,18 +1,15 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    SafeAreaView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+    Alert, FlatList, SafeAreaView,
+    StatusBar, StyleSheet, Text,
+    TouchableOpacity, View,
 } from 'react-native';
+import { Colors, rs } from '../../styles';
 import { AddHabitModal } from './components/AddHabitModal';
 import { HabitCard } from './components/HabitCard';
 import { HabitDateStrip } from './components/HabitDateStrip';
+import { HabitStatsModal } from './components/HabitStatsModal';
 import { useHabits } from './hooks/useHabits';
 import { Habit } from './types/habit';
 
@@ -31,12 +28,13 @@ export default function HabitsScreen() {
         addHabit, removeHabit,
         increment, decrement,
         getStatus, getStreak,
-        isEditable,
+        isEditable, getLast30Days,
     } = useHabits();
 
     const [modalVisible, setModalVisible] = useState(false);
-    // selectedDate artık string — mutation riski yok
     const [selectedDateStr, setSelectedDateStr] = useState(() => toDateStr(new Date()));
+    const [statsHabit, setStatsHabit] = useState<Habit | null>(null);
+    const [statsVisible, setStatsVisible] = useState(false);
 
     const todayStr = toDateStr(new Date());
     const isToday = selectedDateStr === todayStr;
@@ -66,35 +64,52 @@ export default function HabitsScreen() {
     const overLimit = habits.filter(h => getStatus(h, selectedDateStr).isOverLimit).length;
     const pending = habits.length - completed - overLimit;
 
-    // Header tarihi
-    const [selY, selM, selD] = selectedDateStr.split('-').map(Number);
+    const [, selM, selD] = selectedDateStr.split('-').map(Number);
     const headerDate = isToday ? 'Bugün' : `${selD} ${MONTHS_TR[selM - 1]}`;
 
     if (loading) return null;
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F7FA" />
+            <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
 
+            {/* Header */}
             <View style={styles.header}>
                 <View>
                     <Text style={styles.headerTitle}>Alışkanlıklar</Text>
-                    <Text style={styles.headerDate}>{headerDate}</Text>
+                    <Text style={styles.headerSub}>{headerDate}</Text>
                 </View>
-                <TouchableOpacity style={styles.addBtn} onPress={() => setModalVisible(true)}>
-                    <MaterialCommunityIcons name="plus" size={26} color="#fff" />
-                </TouchableOpacity>
+                <View style={styles.headerRight}>
+                    {/* Özet badge'leri */}
+                    {habits.length > 0 && (
+                        <>
+                            {completed > 0 && (
+                                <View style={[styles.badge, { backgroundColor: Colors.success + '15' }]}>
+                                    <MaterialCommunityIcons name="check" size={rs(11)} color={Colors.success} />
+                                    <Text style={[styles.badgeText, { color: Colors.success }]}>{completed}</Text>
+                                </View>
+                            )}
+                            {overLimit > 0 && (
+                                <View style={[styles.badge, { backgroundColor: Colors.danger + '15' }]}>
+                                    <MaterialCommunityIcons name="alert" size={rs(11)} color={Colors.danger} />
+                                    <Text style={[styles.badgeText, { color: Colors.danger }]}>{overLimit}</Text>
+                                </View>
+                            )}
+                        </>
+                    )}
+                    <TouchableOpacity style={styles.addBtn} onPress={() => setModalVisible(true)}>
+                        <MaterialCommunityIcons name="plus" size={rs(24)} color="#fff" />
+                    </TouchableOpacity>
+                </View>
             </View>
 
-            <HabitDateStrip
-                selectedDateStr={selectedDateStr}
-                onSelectDate={setSelectedDateStr}
-            />
+            <HabitDateStrip selectedDateStr={selectedDateStr} onSelectDate={setSelectedDateStr} />
 
+            {/* Özet bar */}
             {habits.length > 0 && (
                 <View style={styles.summaryBar}>
                     <View style={styles.summaryItem}>
-                        <Text style={[styles.summaryNum, { color: '#43A047' }]}>{completed}</Text>
+                        <Text style={[styles.summaryNum, { color: Colors.success }]}>{completed}</Text>
                         <Text style={styles.summaryLabel}>Tamamlandı</Text>
                     </View>
                     <View style={styles.summaryDivider} />
@@ -104,7 +119,7 @@ export default function HabitsScreen() {
                     </View>
                     <View style={styles.summaryDivider} />
                     <View style={styles.summaryItem}>
-                        <Text style={[styles.summaryNum, overLimit > 0 && { color: '#E53935' }]}>
+                        <Text style={[styles.summaryNum, overLimit > 0 && { color: Colors.danger }]}>
                             {overLimit}
                         </Text>
                         <Text style={styles.summaryLabel}>Aşıldı</Text>
@@ -119,7 +134,7 @@ export default function HabitsScreen() {
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
                     <View style={styles.empty}>
-                        <MaterialCommunityIcons name="clipboard-check-outline" size={56} color="#e0e0e0" />
+                        <MaterialCommunityIcons name="clipboard-check-outline" size={rs(56)} color="#e0e0e0" />
                         <Text style={styles.emptyTitle}>Henüz alışkanlık yok</Text>
                         <Text style={styles.emptySub}>
                             Sağ üstteki + butonuna basarak{'\n'}ilk alışkanlığını ekle
@@ -135,6 +150,7 @@ export default function HabitsScreen() {
                         onIncrement={() => increment(item.id, selectedDateStr)}
                         onDecrement={() => decrement(item.id, selectedDateStr)}
                         onLongPress={() => handleLongPress(item)}
+                        onDetail={() => { setStatsHabit(item); setStatsVisible(true); }}
                     />
                 )}
             />
@@ -144,47 +160,94 @@ export default function HabitsScreen() {
                 onClose={() => setModalVisible(false)}
                 onAdd={addHabit}
             />
+
+            <HabitStatsModal
+                visible={statsVisible}
+                onClose={() => { setStatsVisible(false); setStatsHabit(null); }}
+                habit={statsHabit}
+                streak={statsHabit ? getStreak(statsHabit) : 0}
+                last30={statsHabit ? getLast30Days(statsHabit) : []}
+            />
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F5F7FA' },
+    container: { flex: 1, backgroundColor: Colors.background },
+
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingTop: 14,
-        paddingBottom: 10,
+        paddingHorizontal: rs(20),
+        paddingTop: rs(14),
+        paddingBottom: rs(8),
     },
-    headerTitle: { fontSize: 26, fontWeight: 'bold', color: '#222' },
-    headerDate: { fontSize: 13, color: '#aaa', marginTop: 1 },
+    headerTitle: {
+        fontSize: rs(26),
+        fontWeight: '800',
+        color: '#222',
+        letterSpacing: -0.5,
+    },
+    headerSub: {
+        fontSize: rs(12),
+        color: Colors.textLight,
+        marginTop: rs(2),
+    },
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: rs(8),
+    },
+    badge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: rs(3),
+        paddingHorizontal: rs(8),
+        paddingVertical: rs(4),
+        borderRadius: rs(20),
+    },
+    badgeText: {
+        fontSize: rs(12),
+        fontWeight: '700',
+    },
     addBtn: {
-        backgroundColor: '#007AFF',
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: rs(44),
+        height: rs(44),
+        borderRadius: rs(22),
+        backgroundColor: Colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
+        shadowColor: Colors.primary,
+        shadowOpacity: 0.35,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 8,
+        elevation: 5,
     },
+
+    // Özet bar
     summaryBar: {
         flexDirection: 'row',
-        backgroundColor: '#fff',
-        marginHorizontal: 20,
-        borderRadius: 16,
-        paddingVertical: 12,
-        marginBottom: 10,
+        backgroundColor: Colors.surface,
+        marginHorizontal: rs(16),
+        borderRadius: rs(14),
+        paddingVertical: rs(10),
+        marginBottom: rs(8),
         shadowColor: '#000',
         shadowOpacity: 0.04,
-        elevation: 2,
+        shadowOffset: { width: 0, height: 1 },
+        elevation: 1,
     },
     summaryItem: { flex: 1, alignItems: 'center' },
-    summaryDivider: { width: 1, backgroundColor: '#f0f0f0' },
-    summaryNum: { fontSize: 22, fontWeight: 'bold', color: '#333' },
-    summaryLabel: { fontSize: 11, color: '#aaa', marginTop: 2 },
-    list: { paddingHorizontal: 20, paddingBottom: 100 },
-    empty: { alignItems: 'center', marginTop: 70 },
-    emptyTitle: { fontSize: 18, fontWeight: '600', color: '#ccc', marginTop: 16 },
-    emptySub: { fontSize: 13, color: '#ddd', marginTop: 8, textAlign: 'center', lineHeight: 20 },
+    summaryDivider: { width: 1, backgroundColor: Colors.divider },
+    summaryNum: { fontSize: rs(20), fontWeight: '800', color: Colors.textSecondary },
+    summaryLabel: { fontSize: rs(10), color: Colors.textLight, marginTop: rs(2), fontWeight: '500' },
+
+    // Liste
+    list: { paddingHorizontal: rs(16), paddingBottom: rs(100), paddingTop: rs(4) },
+
+    // Boş durum
+    empty: { alignItems: 'center', marginTop: rs(60), gap: rs(10) },
+    emptyTitle: { fontSize: rs(17), fontWeight: '700', color: Colors.textFaint },
+    emptySub: { fontSize: rs(13), color: Colors.textLight, textAlign: 'center', lineHeight: rs(20) },
 });
