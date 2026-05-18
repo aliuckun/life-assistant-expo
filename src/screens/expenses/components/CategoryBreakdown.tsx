@@ -7,11 +7,12 @@ import { PieChart } from './Piechart';
 
 interface Props {
     data: CategoryBreakdownItem[];
+    animTrigger?: number;
 }
 
 const fmt = (n: number) => n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-export const CategoryBreakdown: React.FC<Props> = ({ data }) => {
+export const CategoryBreakdown: React.FC<Props> = ({ data, animTrigger = 0 }) => {
     if (data.length === 0) {
         return (
             <View style={styles.empty}>
@@ -31,6 +32,7 @@ export const CategoryBreakdown: React.FC<Props> = ({ data }) => {
                 <PieChart
                     slices={data.map(d => ({ color: d.color, name: d.name, percent: d.percent, amount: d.amount }))}
                     totalLabel={fmt(total)}
+                    animTrigger={animTrigger}
                 />
             </View>
 

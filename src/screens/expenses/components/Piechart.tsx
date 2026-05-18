@@ -13,6 +13,7 @@ interface Slice {
 interface Props {
     slices: Slice[];
     totalLabel: string;
+    animTrigger?: number;
 }
 
 const SIZE = rs(220);
@@ -26,12 +27,13 @@ const DURATION = 900;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 const DonutSlice = ({
-    percent, offset, color, onPress,
+    percent, offset, color, onPress, animTrigger,
 }: {
     percent: number;
     offset: number;
     color: string;
     onPress: () => void;
+    animTrigger: number;
 }) => {
     const anim = useRef(new Animated.Value(0)).current;
     const circRef = useRef<any>(null);
@@ -52,7 +54,7 @@ const DonutSlice = ({
             useNativeDriver: false,
         }).start();
         return () => anim.removeListener(listener);
-    }, [percent]);
+    }, [percent, animTrigger]);
 
     return (
         <Circle
@@ -70,7 +72,7 @@ const DonutSlice = ({
     );
 };
 
-export const PieChart: React.FC<Props> = ({ slices, totalLabel }) => {
+export const PieChart: React.FC<Props> = ({ slices, totalLabel, animTrigger = 0 }) => {
     const [selected, setSelected] = useState<Slice | null>(null);
 
     if (slices.length === 0) return null;
@@ -117,6 +119,7 @@ export const PieChart: React.FC<Props> = ({ slices, totalLabel }) => {
                             offset={seg.start}
                             color={seg.color}
                             onPress={() => setSelected(selected?.name === seg.name ? null : seg)}
+                            animTrigger={animTrigger}
                         />
                     ))}
                 </Svg>

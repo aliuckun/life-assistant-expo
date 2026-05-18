@@ -2,9 +2,9 @@
   "expo": {
     "name": "life-assistant",
     "slug": "life-assistant",
-    "version": "1.0.0",
+    "version": "3.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/images/bcg.png",
+    "icon": "./src/assets/images/frg.png",
     "splash": {
       "image": "./src/assets/images/bcg.png",
       "resizeMode": "cover",
@@ -19,9 +19,9 @@
       "userInterfaceStyle": "light",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./src/assets/images/bcg.png",
-        "backgroundImage": "./src/assets/images/bcg.png",
-        "monochromeImage": "./src/assets/images/bcg.png"
+        "foregroundImage": "./src/assets/images/frg.png",
+        "backgroundImage": "./src/assets/images/frg.png",
+        "monochromeImage": "./src/assets/images/frg.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.lifeassistant"

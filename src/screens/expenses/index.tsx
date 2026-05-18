@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
     Alert, Modal, SafeAreaView, ScrollView,
     SectionList, StatusBar, StyleSheet, Text,
@@ -101,11 +102,16 @@ export default function ExpensesScreen() {
     } = useExpenses();
 
     const [tab, setTab] = useState<Tab>('list');
+    const [animTrigger, setAnimTrigger] = useState(0);
     const [txModalVisible, setTxModalVisible] = useState(false);
     const [catModalVisible, setCatModalVisible] = useState(false);
     const [resetModalVisible, setResetModalVisible] = useState(false);
     const [budgetTarget, setBudgetTarget] = useState<Category | null>(null);
     const [budgetInput, setBudgetInput] = useState('');
+
+    useFocusEffect(useCallback(() => {
+        setAnimTrigger(t => t + 1);
+    }, []));
 
     const totals = getPeriodTotals();
     const groups = groupedByDay();
@@ -249,7 +255,7 @@ export default function ExpensesScreen() {
                 />
             ) : (
                 <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-                    <CategoryBreakdown data={getCategoryBreakdown(selectedMonth)} />
+                    <CategoryBreakdown data={getCategoryBreakdown(selectedMonth)} animTrigger={animTrigger} />
                     <PastMonths data={pastMonths} selectedMonth={selectedMonth} onSelect={setSelectedMonth} />
 
                     {/* Kategori yönetimi */}

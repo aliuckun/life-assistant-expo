@@ -70,13 +70,14 @@ export const useGoals = () => {
             let totalTarget = 0;
             let totalDone = 0;
 
-            const allGoals = goals; // aktif + arşivlenenler dahil (goals state hepsi)
+            const allGoals = [...goals, ...archivedGoals]; // aktif + arşivlenenler
 
             const goalDetails = allGoals.map(goal => {
-                const daysInWeek = goal.completedDays.filter(dateStr => {
-                    const d = new Date(dateStr.replace(/-/g, '/'));
-                    return d >= startOfWeek && d <= endOfWeek;
-                });
+                const startStr = toDateStr(startOfWeek);
+                const endStr = toDateStr(endOfWeek);
+                const daysInWeek = goal.completedDays.filter(dateStr =>
+                    dateStr >= startStr && dateStr <= endStr
+                );
                 totalTarget += goal.targetCount;
                 totalDone += daysInWeek.length;
                 return {
